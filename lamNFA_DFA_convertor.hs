@@ -1,7 +1,3 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Use camelCase" #-}
-{-# HLINT ignore "Use lambda-case" #-}
-
 import System.IO
 import Data.List
 import Prelude hiding (fail)
@@ -45,7 +41,7 @@ data Automaton_DFA a = Automaton_DFA {
     initialS_DFA :: State_DFA a,
     acceptS_DFA :: States_DFA a
 }
-    -- deriving(Show)
+
 data Automaton_LNFA a = Automaton_LNFA {
     states_LNFA :: States_LNFA a,
     alphabet_LNFA :: Alphabet,
@@ -53,7 +49,6 @@ data Automaton_LNFA a = Automaton_LNFA {
     initialS_LNFA :: States_LNFA a,
     acceptS_LNFA :: States_LNFA a
 }
-    -- deriving(Show)
 -----------------------------------------------------------------------------------------------
 
 instance (Show a) => Show (StateID a) where
@@ -78,7 +73,6 @@ getDFAStatesStrRep states = let
 getDFATransFuncStrRep :: (Eq a) => Automaton_DFA a -> String
 getDFATransFuncStrRep automaton@(Automaton_DFA states alphabet transFunc initialS acceptS) = let
     maxAliasLength = length $ show (length states - 1)
-
     in "Transition function:\n" ++ 
         [' '| _ <- [1..maxAliasLength+2]] ++ "|" ++ 
         foldl (\acc symb -> acc ++ 
@@ -201,6 +195,7 @@ testLNFALambdaTransition transition@(Lambda_LNFA outGoingState inGoingState) sta
         putStrLn "Ingoing state is not included in given states. Try to insert transition again."
         getTransFunc states alphabet
     | otherwise = (transition:) <$> getTransFunc states alphabet
+    
 testLNFATransition :: Trans_LNFA (StateID String) -> States_LNFA (StateID String) -> Alphabet -> IO [Trans_LNFA (StateID String)]
 testLNFATransition transition@(Trans_LNFA symb outGoingState inGoingState) states alphabet
     | symb `notElem` alphabet = do
