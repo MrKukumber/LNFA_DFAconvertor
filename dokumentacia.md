@@ -1,5 +1,11 @@
 # Dokumentácia - convertor from LNFA to DFA
 
+- program v jazyku haskel slúžiaci na prevod z lambda nedeterministického konečného automatu na deterministický konečný automat
+- disponuje uživatelským rozhraním pre zadávanie LNFA a prívetivým vypisovaním DFA na výstup
+- aplikácia sa spušťa pomocou funkcie *main* z príkazového riadku haskelovského kompilátora
+- následne sa vypíšu pre uživatela inštrukcie, akým spôsobom má automat zadať a po zadaní všetkých parametrov sa vypíše vytvorený DFA na výstup
+- možnosť rozšírenia o ďalšie funkcionality
+
 ## Komponenty
 
 1. hlavný
