@@ -52,7 +52,7 @@ data Automaton_LNFA a = Automaton_LNFA {
 -----------------------------------------------------------------------------------------------
 
 instance (Show a) => Show (StateID a) where
-    show (StateID a) = "S" ++ show a
+    show (StateID a) = show a
 
 instance (Eq a, Show a) => Show (Automaton_DFA a) where
     show automaton@(Automaton_DFA states alphabet transFunc initialS acceptS) = 
@@ -78,8 +78,8 @@ getDFATransFuncStrRep automaton@(Automaton_DFA states alphabet transFunc initial
         foldl (\acc symb -> acc ++ 
             [' '| _ <- [1..(maxAliasLength-1) `div` 2 + 1]] ++ [symb] ++ 
             [' '| _ <- [1..(maxAliasLength-1) `div` 2 + (maxAliasLength-1) `mod` 2 + 1]] ++ "|") "" alphabet ++ 
-        "\n    " ++
-        ['-'| _ <- [1..maxAliasLength+1+(maxAliasLength+3)*length alphabet-2]] ++ "\n" ++
+        "\n   " ++
+        ['-'| _ <- [1..maxAliasLength+1+(maxAliasLength+3)*length alphabet-1]] ++ "\n" ++
         foldl (getDFATransitionStrRep automaton) "" states
 
 -- this funciton is used as 'foldl' argument, adds new line of table of transition function to accumulator
@@ -289,6 +289,10 @@ satisfy f = do
     c <- anyChar
     if f c then return c else fail
 
+-- parse nothing, return an empty list
+none :: Parser [a]
+none = return []
+
 parseSpace :: Parser Char
 parseSpace = satisfy isSpace
 
@@ -333,8 +337,16 @@ parseAlphabet = parseMany1 parseAlphSymb
 parseAlphSymb :: Parser InSymbID
 parseAlphSymb = token anyChar
 
+-- parse alphabet symbol which must be followed by space character
+parseAlphSymb1 :: Parser InSymbID
+parseAlphSymb1 =  do
+    symb <- token anyChar 
+    parseSpace
+    return symb
+
+
 parseTrans_LNFA :: Parser (Trans_LNFA (StateID String))
-parseTrans_LNFA = Trans_LNFA <$> parseAlphSymb <*> parseState <*> parseState
+parseTrans_LNFA = Trans_LNFA <$> parseAlphSymb1 <*> parseState <*> parseState
 
 parseLambdaTrans_LNFA :: Parser (Trans_LNFA (StateID String))
 parseLambdaTrans_LNFA = Lambda_LNFA <$> parseState <*> parseState
@@ -356,12 +368,12 @@ preprocessAndcheckLNFA :: (Ord a, Show a) => Automaton_LNFA a -> Automaton_LNFA 
 preprocessAndcheckLNFA automaton = let
     deDupStates = (remDupAndSort . states_LNFA) automaton
     deDupAlphabet = (remDupAndSort . alphabet_LNFA) automaton
-    _ = checkTransFuncLNFA automaton
-    deDupTransFunc = (remDupAndSort. transFunc_LNFA) automaton
-    _ = foldl (\_ initS -> initS `elem` states_LNFA automaton || error ("Initial state" ++ show initS ++ "is not state of automaton!")) True (initialS_LNFA automaton)
-    deDupInitialS = (remDupAndSort . initialS_LNFA) automaton
-    _ = foldl (\_ acceptS -> acceptS `elem` states_LNFA automaton || error ("Accepting state" ++ show acceptS ++ "is not state of automaton!")) True (acceptS_LNFA automaton)
-    deDupAcceptS = (remDupAndSort . acceptS_LNFA) automaton
+    deDupTransFunc = if checkTransFuncLNFA automaton 
+        then (remDupAndSort. transFunc_LNFA) automaton else (remDupAndSort. transFunc_LNFA) automaton
+    deDupInitialS = if foldl (\_ initS -> initS `elem` states_LNFA automaton || error ("Initial state " ++ show initS ++ " is not state of automaton!")) True (initialS_LNFA automaton)
+        then (remDupAndSort . initialS_LNFA) automaton else (remDupAndSort . initialS_LNFA) automaton
+    deDupAcceptS = if foldl (\_ acceptS -> acceptS `elem` states_LNFA automaton || error ("Accepting state " ++ show acceptS ++ " is not state of automaton!")) True (acceptS_LNFA automaton)
+        then (remDupAndSort . acceptS_LNFA) automaton else (remDupAndSort . acceptS_LNFA) automaton
     in Automaton_LNFA deDupStates deDupAlphabet deDupTransFunc deDupInitialS deDupAcceptS
 
 -- checking transition funciton of LNFA for valid transitions
@@ -375,7 +387,7 @@ checkTransFuncLNFA automaton = foldl checkTransition True (transFunc_LNFA automa
                     else inGoing `elem` states_LNFA automaton || error ("State " ++ show inGoing ++ " from transition function is not state of automaton!")
             Trans_LNFA symb outGoing inGoing ->
                 if symb `notElem` alphabet_LNFA automaton
-                    then error ("Symbol " ++ show symb ++ " from transition function is not alphabet of automaton!")
+                    then error ("Symbol " ++ show symb ++ " from transition function is not in alphabet of automaton!")
                     else if outGoing `notElem` states_LNFA automaton
                         then error ("State " ++ show outGoing ++ " from transition function is not state of automaton!")
                         else inGoing `elem` states_LNFA automaton || error ("State " ++ show inGoing ++ " from transition function is not state of automaton!")
